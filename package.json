@@ -1,0 +1,29 @@
+{
+  "name": "@judah-silva/rnacanvas",
+  "version": "0.0.1",
+  "description": "A 3D Canvas for displaying and interacting with custom RNA models. Powered by BabylonJS.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [
+    "rna",
+    "3d canvas",
+    "babylonjs",
+    "test"
+  ],
+  "author": "Judah Silva",
+  "license": "MIT",
+  "dependencies": {
+    "@babylonjs/core": "^7.50.0",
+    "numeric": "^1.2.6",
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "@types/numeric": "1.2.6",
+    "@types/react": "18.2.35"
+  }
+}
