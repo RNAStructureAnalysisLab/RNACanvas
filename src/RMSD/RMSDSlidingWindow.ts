@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Sameer Dingore <sdingore@csumb.edu>
  * @author Shahidul Islam <sislam@csumb.edu>
  */

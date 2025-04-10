@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Judah Silva <silva.judah7@outlook.com>
  */
 
@@ -16,7 +14,7 @@ import { Vec3 } from '@/src/Math';
  */
 export class EventManager {
   // Custom observables for each event type
-  private _eventObservables: Map<string, Observable<Events.Event>> = new Map();
+  private _eventObservables: Map<string | keyof Events.EventMap, Observable<Events.Event>> = new Map();
 
   // Babylon.js observer references for cleanup
   private _pointerObserver: Observer<PointerInfo> | null = null;
@@ -56,15 +54,16 @@ export class EventManager {
    * @param callback Callback function to run when the event is triggered
    * @returns Babylon Observer instance for later removal
    */
-  on<T extends Events.Event>(eventType: Events.EventType | string,
-    callback: (event: T) => void): Observer<Events.Event> {
+  on<K extends keyof Events.EventMap>(
+    eventType: K,
+    callback: (event: Events.EventMap[K]) => void): Observer<Events.Event> {
     // Create an observable for custom event types if it doesn't exist
     if (!this._eventObservables.has(eventType)) {
-      this._eventObservables.set(eventType, new Observable<Events.Event>());
+      this._eventObservables.set(eventType, new Observable<Events.EventMap[K]>());
     }
 
     // Add the observer and return it so the user can remove it later
-    return this._eventObservables.get(eventType)!.add(callback as (event: Events.Event) => void);
+    return this._eventObservables.get(eventType)!.add(callback as (event: Events.EventMap[K]) => void);
   }
 
   /**

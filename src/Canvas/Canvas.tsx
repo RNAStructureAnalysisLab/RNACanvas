@@ -1,7 +1,5 @@
 /**
  * Copyright (c) 2025 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
  * @author Sameer Dingore <sdingore@csumb.edu>
  * @author Judah Silva <silva.judah7@outlook.com>
  */
@@ -690,21 +688,64 @@ export function Canvas({
         });
 
         const eventManager = scene.current?.eventManager;
-        eventManager.on<Events.SelectionEvent>(Events.EventType.OBJECT_SELECTED, onSelectMotif);
-        eventManager.on<Events.SelectionEvent>(Events.EventType.OBJECT_DESELECTED, onDeselectMotif);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_MOVE, onMouseMove);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_WHEEL, onMouseScroll);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_DOWN, onMouseDown);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_UP, onMouseUp);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardRotate);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardTranslate);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardSelect);
+        eventManager.on(Events.EventType.OBJECT_SELECTED, onSelectMotif);
+        eventManager.on(Events.EventType.OBJECT_DESELECTED, onDeselectMotif);
+        eventManager.on(Events.EventType.POINTER_MOVE, onMouseMove);
+        eventManager.on(Events.EventType.POINTER_WHEEL, onMouseScroll);
+        eventManager.on(Events.EventType.POINTER_DOWN, onMouseDown);
+        eventManager.on(Events.EventType.POINTER_UP, onMouseUp);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardRotate);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardTranslate);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardSelect);
 
         if (customEventProps) {
           customEventProps.forEach((customEventProp) => {
-            eventManager.on<typeof customEventProp.event>(
-              customEventProp.eventType,
-              customEventProp.callback);
+            switch (customEventProp.eventType) {
+              // Handle Pointer Events
+              case Events.EventType.POINTER_DOWN:
+              case Events.EventType.POINTER_UP:
+              case Events.EventType.POINTER_MOVE:
+              case Events.EventType.POINTER_WHEEL:
+              case Events.EventType.TOUCH_END:
+              case Events.EventType.TOUCH_MOVE:
+              case Events.EventType.TOUCH_START:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.PointerEvent) => void);
+                break;
+
+              // Handle Keyboard Events
+              case Events.EventType.KEY_DOWN:
+              case Events.EventType.KEY_UP:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.KeyboardEvent) => void);
+                break;
+
+              // Handle Pinch Events
+              case Events.EventType.PINCH:
+              case Events.EventType.PINCH_END:
+              case Events.EventType.PINCH_START:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.PinchEvent) => void);
+                break;
+
+              // Handle Selection Events
+              case Events.EventType.OBJECT_SELECTED:
+              case Events.EventType.OBJECT_DESELECTED:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.SelectionEvent) => void);
+                break;
+
+              // Handle Events
+              default:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.Event) => void);
+                break;
+            }
           });
         }
       } else {
