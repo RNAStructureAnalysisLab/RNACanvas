@@ -675,16 +675,16 @@ export function Canvas({
       });
       if (scene.current.children.size !== motifs.length) {
         motifs.forEach((motifMesh: Motif, index) => {
+          scene.current?.add(motifMesh);
           // If there is a pre-determined position, update the positions array
-          if (motifProps[index].position) positions[index] = motifProps[index].position;
+          if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
           motifMesh.setPosition(positions[index].x, positions[index].y, positions[index].z);
 
           // If there is a pre-determined rotation, set the motif to it
-          if (motifProps[index].rotation) motifMesh.setQuaternion(motifProps[index].rotation);
+          if (motifProps[index].rotation) motifMesh.quat.setToQuaternion(motifProps[index].rotation.quaternion);
 
           // Set the scale of the motif based on the size of the canvas
           motifMesh.multiplyScalar(canvasRef.current!.width / 250);
-          scene.current?.add(motifMesh);
         });
 
         const eventManager = scene.current?.eventManager;

@@ -104,8 +104,15 @@ export class Motif extends Group<Residue> {
   }
 
   get quat(): Quat {
+    if (this._node.rotationQuaternion === null) {
+      this._node.rotationQuaternion = this._node.rotation.toQuaternion();
+    }
     this._quat.setToQuaternion(this._node.rotationQuaternion);
     return this._quat;
+  }
+
+  get scale(): number {
+    return this._node.scaling.x;
   }
 
   get position(): Vec3 {

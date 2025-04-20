@@ -15,6 +15,7 @@ export interface MotifProps {
     locked: boolean,
     position?: Vec3,
     rotation?: Quat,
+    scale?: number,
 }
 
 /**
