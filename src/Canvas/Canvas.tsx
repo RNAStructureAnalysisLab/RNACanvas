@@ -89,7 +89,7 @@ export function Canvas({
    * @param motif Motif to be added
   */
   const addMotif = (motif: Motif): void => {
-    if (selectedMotifIds.has(motif.uuid)) { // If the motif is already selected
+    if (selectedMotifMeshState.current.has(motif)) { // If the motif is already selected
       return;
     }
 
@@ -113,13 +113,13 @@ export function Canvas({
    * @param motif Motif to be removed
    */
   const removeMotif = (motif: Motif): void => {
-    if (!selectedMotifIds.has(motif.uuid)) { // If the motif is not selected
+    if (!selectedMotifMeshState.current.has(motif)) { // If the motif is not selected
       return;
     }
 
     selectedMotifMeshState.current.delete(motif);
     setSelectedmotifIds((prevState: Set<string>) => {
-      const newState = prevState;
+      const newState = new Set(prevState);
       newState.delete(motif.uuid);
       return newState;
     });
@@ -413,15 +413,17 @@ export function Canvas({
       return;
     }
 
-    if (!(/^[0-9]$/.test(event.key))) { // A non-number key was pressed
+    if (!(/^[1-9]$/.test(event.key)) || Number(event.key) > motifs.length) { // A non-number key was pressed, or is out of bounds
       return;
     }
 
     // Get the 1-indexed motif
     const motif = motifs[Number(event.key) - 1];
     if (selectedMotifMeshState.current.has(motif)) { // Toggle select state for this motif
+      console.log('removing motif');
       removeMotif(motif);
     } else {
+      console.log('adding motif');
       addMotif(motif);
     }
 
@@ -681,10 +683,12 @@ export function Canvas({
           motifMesh.setPosition(positions[index].x, positions[index].y, positions[index].z);
 
           // If there is a pre-determined rotation, set the motif to it
-          if (motifProps[index].rotation) motifMesh.quat.setToQuaternion(motifProps[index].rotation.quaternion);
+          if (motifProps[index].rotation) motifMesh.setQuaternion(motifProps[index].rotation);
 
           // Set the scale of the motif based on the size of the canvas
-          motifMesh.multiplyScalar(canvasRef.current!.width / 250);
+          let scale = canvasRef.current!.width / 250;
+          if (motifProps[index].scale) scale = motifProps[index].scale;
+          motifMesh.multiplyScalar(scale);
         });
 
         const eventManager = scene.current?.eventManager;
