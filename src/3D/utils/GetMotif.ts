@@ -5,7 +5,9 @@
  */
 
 import { getPoints } from './GetPoints';
-import { MeshObject, Motif, Residue } from '@/src/3D';
+import { MeshObject, Motif, parseAtomCoords, Residue } from '@/src/3D';
+
+export type MotifMesh = Record<string, any>;
 /**
  * ________________________________________________________________________________________________
  */
@@ -21,19 +23,20 @@ import { MeshObject, Motif, Residue } from '@/src/3D';
  * @async
  */
 export async function getMotif(
-    motifJSONFileName: string,
+    motifName: string,
+    motifMesh: MotifMesh,
     motifColorHex: string = '0xcc2900',
     // highLightColorHex: string = '0xff3300'
 ): Promise<Motif> {
     /**
      * Create a motif group and add the motif structure to it
      */
-    const motif = new Motif(`${motifJSONFileName}_motif`);
-    const motifJSONFileData = await fetch(`/${motifJSONFileName}`);
-    const jsonObject = await motifJSONFileData.json();
+    const motif = new Motif(`${motifName}_motif`);
+    // const motifJSONFileData = await fetch(`/${motifJSONFileName}`);
+    // const jsonObject = await motifJSONFileData.json();
     // eslint-disable-next-line no-restricted-syntax
-    for (const [key] of Object.entries(jsonObject)) {
-        const { vertices, indices } = getPoints(jsonObject[key]);
+    for (const [key] of Object.entries(motifMesh)) {
+        const { vertices, indices } = getPoints(motifMesh[key]);
         const residue = new Residue('residue');
         /**
          * ________________________________________________________________________________________
@@ -55,7 +58,8 @@ export async function getMotif(
         motif.addChild(residue);
     }
 
-    motif.userData.fileName = motifJSONFileName;
+    motif.userData.fileName = motifName;
+    motif.userData.atomInfo = await parseAtomCoords(motifMesh);
     return motif;
 }
 

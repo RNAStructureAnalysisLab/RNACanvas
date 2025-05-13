@@ -9,7 +9,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { CanvasProps } from './CanvasTypes';
 import { CanvasAttributeTypes, CanvasDataManager, ScoreInfo } from './CanvasDataManager';
-import { MeshObject, Motif, RenderScene, Residue, updateAllMotifs } from '@/src/3D';
+import { MeshObject, Motif, RenderScene, Residue } from '@/src/3D';
 import { Events } from '@/src/Events';
 import { calculateAllKabschRMSD } from '@/src/Kabsch';
 import { Vec3 } from '@/src/Math';
@@ -420,10 +420,10 @@ export function Canvas({
     // Get the 1-indexed motif
     const motif = motifs[Number(event.key) - 1];
     if (selectedMotifMeshState.current.has(motif)) { // Toggle select state for this motif
-      console.log('removing motif');
+      // console.log('removing motif');
       removeMotif(motif);
     } else {
-      console.log('adding motif');
+      // console.log('adding motif');
       addMotif(motif);
     }
 
@@ -605,7 +605,11 @@ export function Canvas({
   useEffect(() => {
     if (CanvasDataManager.kabschRMSD !== kabschRMSD) {
       CanvasDataManager.setKabschRMSD(kabschRMSD);
+    } else if (CanvasDataManager.kabschRMSD.length !== motifs.length) {
+      CanvasDataManager.setKabschRMSD(calculateAllKabschRMSD(motifs));
     }
+
+    // console.log(CanvasDataManager.kabschRMSD);
   }, [kabschRMSD]);
 
   /**
@@ -663,7 +667,7 @@ export function Canvas({
       );
     }
 
-    // console.log(canvasRef.current.width, canvasRef.current.height);
+    // console.log('canvas motif props: ', motifProps);
 
     /**
      * Initialization of the motifs on the canvas setting its position, and scale
@@ -672,9 +676,9 @@ export function Canvas({
    const positions = calculatePositions(motifs.length);
 
     if (motifs.length > 0) {
-      updateAllMotifs(motifs).then(() => {
-        setKabschRMSD(calculateAllKabschRMSD(motifs));
-      });
+      setKabschRMSD(calculateAllKabschRMSD(motifs));
+      // updateAllMotifs(motifs).then(() => {
+      // });
       if (scene.current.children.size !== motifs.length) {
         motifs.forEach((motifMesh: Motif, index) => {
           scene.current?.add(motifMesh);
