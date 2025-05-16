@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Sameer Dingore <sdingore@csumb.edu>
  * @author Shahidul Islam <sislam@csumb.edu>
  */
@@ -33,6 +31,7 @@ export function getRMSD(a: any, b: any): number {
       if (a instanceof Motif && b instanceof Motif) {
         newCoords1 = rotateAllPoints(a.userData.atomInfo, a.quat);
         newCoords2 = rotateAllPoints(b.userData.atomInfo, b.quat);
+        return calculateRMSDSlide(newCoords1, newCoords2); // Call slide RMSD for motifs, because they may be uneven lengths
       } else {
         return -1;
       }
@@ -43,7 +42,7 @@ export function getRMSD(a: any, b: any): number {
       return -1;
     }
     // Calculate squared distances
-    const squaredDistances = newCoords1.reduce((sum, coord1, index) => {
+    const squaredDistances = newCoords1.reduce((sum: number, coord1: Vec3, index: number) => {
       const coord2 = newCoords2[index];
       const distanceSquared =
         (coord1.x - coord2.x) ** 2 + (coord1.y - coord2.y) ** 2 + (coord1.z - coord2.z) ** 2;

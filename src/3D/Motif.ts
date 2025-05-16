@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Judah Silva <silva.judah7@outlook.com>
  */
 
@@ -21,14 +19,12 @@ interface userData {
  */
 export class Motif extends Group<Residue> {
   public userData: userData;
-  private _quat: Quat;
 
   constructor(name: string) {
     const tempEngine = new NullEngine();
     const tempScene = new Scene(tempEngine);
 
     super(name, tempScene);
-    this._quat = new Quat();
     this.userData = {
       atomInfo: [],
       fileName: '',
@@ -63,8 +59,6 @@ export class Motif extends Group<Residue> {
       axis.y,
       axis.z
     ), angle, Space.WORLD);
-
-    this._nanCheck(); // For a bug where motifs were disappearing, probably don't need
   }
 
   rotateByQuaternion(quat: Quat) {
@@ -72,15 +66,13 @@ export class Motif extends Group<Residue> {
       this._node.rotationQuaternion = this._node.rotation.toQuaternion();
     }
     quat.quaternion.multiplyToRef(this._node.rotationQuaternion!, this._node.rotationQuaternion!);
-
-    this._nanCheck();
   }
 
   setQuaternion(quat: Quat) {
     if (this._node.rotationQuaternion === null) {
       this._node.rotationQuaternion = this._node.rotation.toQuaternion();
     }
-    this._quat.setToQuaternion(quat.quaternion);
+    this._node.rotationQuaternion.set(quat.x, quat.y, quat.z, quat.w);
   }
 
   multiplyScalar(scalar: number) {
@@ -91,14 +83,12 @@ export class Motif extends Group<Residue> {
     );
   }
 
-  private _nanCheck(): void {
-    if (Number.isNaN(this._quat.quaternion.w)
-      || Number.isNaN(this._quat.quaternion.x)
-      || Number.isNaN(this._quat.quaternion.y)
-      || Number.isNaN(this._quat.quaternion.z)) {
-        this._quat.setToQuaternion(Quaternion.Identity());
-        throw new Error(`Quaternion is NaN for motif ${this._node.name}`);
-      }
+  setScale(scale: number) {
+    this._node.scaling = new Vector3(
+      scale,
+      scale,
+      scale
+    );
   }
 
   get uuid(): string {
@@ -106,8 +96,14 @@ export class Motif extends Group<Residue> {
   }
 
   get quat(): Quat {
-    this._quat.setToQuaternion(this._node.rotationQuaternion);
-    return this._quat;
+    if (this._node.rotationQuaternion === null) {
+      this._node.rotationQuaternion = this._node.rotation.toQuaternion();
+    }
+    return new Quat().setToQuaternion(this._node.rotationQuaternion);
+  }
+
+  get scale(): number {
+    return this._node.scaling.x;
   }
 
   get position(): Vec3 {

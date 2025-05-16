@@ -1,7 +1,5 @@
 /**
  * Copyright (c) 2025 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
  * @author Sameer Dingore <sdingore@csumb.edu>
  * @author Judah Silva <silva.judah7@outlook.com>
  */
@@ -11,7 +9,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { CanvasProps } from './CanvasTypes';
 import { CanvasAttributeTypes, CanvasDataManager, ScoreInfo } from './CanvasDataManager';
-import { MeshObject, Motif, RenderScene, Residue, updateAllMotifs } from '@/src/3D';
+import { MeshObject, Motif, RenderScene, Residue } from '@/src/3D';
 import { Events } from '@/src/Events';
 import { calculateAllKabschRMSD } from '@/src/Kabsch';
 import { Vec3 } from '@/src/Math';
@@ -91,7 +89,7 @@ export function Canvas({
    * @param motif Motif to be added
   */
   const addMotif = (motif: Motif): void => {
-    if (selectedMotifIds.has(motif.uuid)) { // If the motif is already selected
+    if (selectedMotifMeshState.current.has(motif)) { // If the motif is already selected
       return;
     }
 
@@ -115,13 +113,13 @@ export function Canvas({
    * @param motif Motif to be removed
    */
   const removeMotif = (motif: Motif): void => {
-    if (!selectedMotifIds.has(motif.uuid)) { // If the motif is not selected
+    if (!selectedMotifMeshState.current.has(motif)) { // If the motif is not selected
       return;
     }
 
     selectedMotifMeshState.current.delete(motif);
     setSelectedmotifIds((prevState: Set<string>) => {
-      const newState = prevState;
+      const newState = new Set(prevState);
       newState.delete(motif.uuid);
       return newState;
     });
@@ -233,7 +231,6 @@ export function Canvas({
       // console.log('possible destruction prevented: ', event);
       return;
     }
-    // console.log(event);
     // Check if right-click is pressed.
     if (event.buttons === 2 && selectedMotifMeshState.current.size > 0) {
       if (scene.current) {
@@ -245,8 +242,10 @@ export function Canvas({
         const deltaY = (rawDeltaY / renderHeight) * canvasRef.current!.height;
         // Translate all unlocked motifs
         selectedMotifMeshState.current.forEach((element: Motif) => {
-          if (!lockedMotifIdState.current.includes(element.uuid) &&
-              !hardLockedMotifIds.includes(element.uuid)) {
+          if (
+            !lockedMotifIdState.current.includes(element.uuid) &&
+            !hardLockedMotifIds.includes(element.uuid)
+          ) {
             element.translate(-deltaX, -deltaY, 0);
           }
         });
@@ -271,7 +270,6 @@ export function Canvas({
           if (!lockedMotifIdState.current.includes(element.uuid) &&
               !hardLockedMotifIds.includes(element.uuid)) {
             // element.quaternion.multiplyQuaternions(rotationQuat, element.quaternion);
-            // console.log(event);
             element.rotate(axisVec, angle);
           }
         });
@@ -303,11 +301,18 @@ export function Canvas({
       const zoomDirection = event.originalEvent.deltaY > 0 ? -1 : 1; // -1 for zoom in, 1 for zoom out
       selectedMotifMeshState.current.forEach((element: Motif) => {
         // Adjust the scale of the selected motif based on the zoom direction
-        if (!lockedMotifIdState.current.includes(element.uuid) &&
-            !hardLockedMotifIds.includes(element.uuid)) {
+        if (
+          !lockedMotifIdState.current.includes(element.uuid) &&
+          !hardLockedMotifIds.includes(element.uuid) &&
+          !((element.scale <= 1) && zoomDirection === -1) &&
+          !((element.scale >= 30) && zoomDirection === 1)
+        ) {
           const scaleFactor = 1 + zoomDirection * zoomSpeed;
           element.multiplyScalar(scaleFactor);
         }
+
+        if (element.scale < 1) element.setScale(1);
+        if (element.scale > 30) element.setScale(30);
       });
     }
   }
@@ -415,15 +420,17 @@ export function Canvas({
       return;
     }
 
-    if (!(/^[0-9]$/.test(event.key))) { // A non-number key was pressed
+    if (!(/^[1-9]$/.test(event.key)) || Number(event.key) > motifs.length) { // A non-number key was pressed, or is out of bounds
       return;
     }
 
     // Get the 1-indexed motif
     const motif = motifs[Number(event.key) - 1];
     if (selectedMotifMeshState.current.has(motif)) { // Toggle select state for this motif
+      // console.log('removing motif');
       removeMotif(motif);
     } else {
+      // console.log('adding motif');
       addMotif(motif);
     }
 
@@ -455,6 +462,69 @@ export function Canvas({
 
     return positions;
   };
+  
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * This function takes in a number of motifs and auto-determines starting positions for them on the canvas.
+   * @param numMotifs { number } The number of motifs to be displayed on the canvas.
+   */
+  // const isGoingOutOfBounds = (currPosition: Vec3, deltaX: number, deltaY: number): boolean => {
+  //   if (!canvasRef.current) {
+  //     return [];
+  //   }
+
+  //   const totalWidth: number = canvasRef.current.width;
+  //   const subdividedWidth: number = totalWidth / (numMotifs);
+  //   const halfWidth: number = subdividedWidth / 2;
+  //   const totalHeight: number = canvasRef.current.height;
+  //   const subdividedHeight: number = (totalHeight * (numMotifs > 3 ? 1 : 0)) / 5;
+
+  //   const positions: Vec3[] = [];
+  //   for (let i = 0, x = totalWidth / 2; i < numMotifs; i += 1, x -= subdividedWidth) {
+  //     positions.push(new Vec3(x - halfWidth, subdividedHeight * (i % 2 ? 1 : -1), -100));
+  //   }
+
+  //   return positions;
+  // };
+
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * Function to update motif positions and rotations from motifProps
+  */
+  const updateMotifs = (): void => {
+    const positions = calculatePositions(motifs.length);
+
+    motifs.forEach((motifMesh: Motif, index) => {
+      if (!scene.current?.children.has(motifMesh.uuid)) return;
+      // If there is a pre-determined position, update the positions array
+      if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
+      motifMesh.setPosition(positions[index].x, positions[index].y, positions[index].z);
+
+      // If there is a pre-determined rotation, set the motif to it
+      if (motifProps[index].rotation) motifMesh.setQuaternion(motifProps[index].rotation);
+
+      // Set the scale of the motif based on the size of the canvas
+      let scale = canvasRef.current!.width / 250;
+      if (motifProps[index].scale) scale = motifProps[index].scale;
+      motifMesh.setScale(scale);
+    });
+  }
+
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * This useEffect is used to update the selectedMotifIds state whenever the equivalent variable in the DataManager is updated.
+   * #UseEffect
+   * #State
+   */
+  useEffect(() => {
+    updateMotifs();
+  }, [motifProps]);
 
   /**
    * ____________________________________________________________________________________________
@@ -605,7 +675,11 @@ export function Canvas({
   useEffect(() => {
     if (CanvasDataManager.kabschRMSD !== kabschRMSD) {
       CanvasDataManager.setKabschRMSD(kabschRMSD);
+    } else if (CanvasDataManager.kabschRMSD.length !== motifs.length) {
+      CanvasDataManager.setKabschRMSD(calculateAllKabschRMSD(motifs));
     }
+
+    // console.log(CanvasDataManager.kabschRMSD);
   }, [kabschRMSD]);
 
   /**
@@ -663,54 +737,92 @@ export function Canvas({
       );
     }
 
-    // console.log(canvasRef.current.width, canvasRef.current.height);
-
     /**
      * Initialization of the motifs on the canvas setting its position, and scale
      * #Definition
     */
-   const positions = calculatePositions(motifs.length);
-
     if (motifs.length > 0) {
-      updateAllMotifs(motifs).then(() => {
-        setKabschRMSD(calculateAllKabschRMSD(motifs));
-      });
+      setKabschRMSD(calculateAllKabschRMSD(motifs));
+      // updateAllMotifs(motifs).then(() => {
+      // });
       if (scene.current.children.size !== motifs.length) {
+        const positions = calculatePositions(motifs.length);
         motifs.forEach((motifMesh: Motif, index) => {
+          scene.current?.add(motifMesh);
           // If there is a pre-determined position, update the positions array
-          if (motifProps[index].position) positions[index] = motifProps[index].position;
+          if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
           motifMesh.setPosition(positions[index].x, positions[index].y, positions[index].z);
 
           // If there is a pre-determined rotation, set the motif to it
           if (motifProps[index].rotation) motifMesh.setQuaternion(motifProps[index].rotation);
 
           // Set the scale of the motif based on the size of the canvas
-          motifMesh.multiplyScalar(canvasRef.current!.width / 250);
-          scene.current?.add(motifMesh);
+          let scale = canvasRef.current!.width / 250;
+          if (motifProps[index].scale) scale = motifProps[index].scale;
+          motifMesh.multiplyScalar(scale);
         });
 
         const eventManager = scene.current?.eventManager;
-        eventManager.on<Events.SelectionEvent>(Events.EventType.OBJECT_SELECTED, onSelectMotif);
-        eventManager.on<Events.SelectionEvent>(Events.EventType.OBJECT_DESELECTED, onDeselectMotif);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_MOVE, onMouseMove);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_WHEEL, onMouseScroll);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_DOWN, onMouseDown);
-        eventManager.on<Events.PointerEvent>(Events.EventType.POINTER_UP, onMouseUp);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardRotate);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardTranslate);
-        eventManager.on<Events.KeyboardEvent>(Events.EventType.KEY_DOWN, onKeyboardSelect);
+        eventManager.on(Events.EventType.OBJECT_SELECTED, onSelectMotif);
+        eventManager.on(Events.EventType.OBJECT_DESELECTED, onDeselectMotif);
+        eventManager.on(Events.EventType.POINTER_MOVE, onMouseMove);
+        eventManager.on(Events.EventType.POINTER_WHEEL, onMouseScroll);
+        eventManager.on(Events.EventType.POINTER_DOWN, onMouseDown);
+        eventManager.on(Events.EventType.POINTER_UP, onMouseUp);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardRotate);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardTranslate);
+        eventManager.on(Events.EventType.KEY_DOWN, onKeyboardSelect);
 
         if (customEventProps) {
           customEventProps.forEach((customEventProp) => {
-            eventManager.on<typeof customEventProp.event>(
-              customEventProp.eventType,
-              customEventProp.callback);
+            switch (customEventProp.eventType) {
+              // Handle Pointer Events
+              case Events.EventType.POINTER_DOWN:
+              case Events.EventType.POINTER_UP:
+              case Events.EventType.POINTER_MOVE:
+              case Events.EventType.POINTER_WHEEL:
+              case Events.EventType.TOUCH_END:
+              case Events.EventType.TOUCH_MOVE:
+              case Events.EventType.TOUCH_START:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.PointerEvent) => void);
+                break;
+
+              // Handle Keyboard Events
+              case Events.EventType.KEY_DOWN:
+              case Events.EventType.KEY_UP:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.KeyboardEvent) => void);
+                break;
+
+              // Handle Pinch Events
+              case Events.EventType.PINCH:
+              case Events.EventType.PINCH_END:
+              case Events.EventType.PINCH_START:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.PinchEvent) => void);
+                break;
+
+              // Handle Selection Events
+              case Events.EventType.OBJECT_SELECTED:
+              case Events.EventType.OBJECT_DESELECTED:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.SelectionEvent) => void);
+                break;
+
+              // Handle Events
+              default:
+                eventManager.on(
+                  customEventProp.eventType,
+                  customEventProp.callback as (e: Events.Event) => void);
+                break;
+            }
           });
         }
-      } else {
-        motifs.forEach((motifMesh) => {
-          scene.current?.add(motifMesh);
-        });
       }
     }
     /**

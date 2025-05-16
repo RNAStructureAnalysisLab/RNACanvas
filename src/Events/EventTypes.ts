@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Judah Silva <silva.judah7@outlook.com>
  */
 
@@ -9,6 +7,33 @@ import type { Motif, Residue } from '@/src/3D';
 import type { Vec3 } from '@/src/Math';
 
 export namespace Events {
+  export interface EventMap {
+    [EventType.POINTER_DOWN]: PointerEvent;
+    [EventType.POINTER_UP]: PointerEvent;
+    [EventType.POINTER_MOVE]: PointerEvent;
+    [EventType.POINTER_WHEEL]: PointerEvent;
+  
+    [EventType.KEY_DOWN]: KeyboardEvent;
+    [EventType.KEY_UP]: KeyboardEvent;
+  
+    [EventType.TOUCH_START]: PointerEvent;
+    [EventType.TOUCH_END]: PointerEvent;
+    [EventType.TOUCH_MOVE]: PointerEvent;
+    [EventType.PINCH_START]: PinchEvent;
+    [EventType.PINCH]: PinchEvent;
+    [EventType.PINCH_END]: PinchEvent;
+  
+    [EventType.OBJECT_SELECTED]: SelectionEvent;
+    [EventType.OBJECT_DESELECTED]: SelectionEvent;
+  
+    [EventType.RESIZE]: Event;
+    [EventType.RENDER]: Event;
+    [EventType.ENGINE_STARTED]: Event;
+    [EventType.ENGINE_STOPPED]: Event;
+  
+    [key: string]: Event;
+  }
+
   export enum EventType {
     // Pointer events
     POINTER_DOWN = 'pointerDown',
