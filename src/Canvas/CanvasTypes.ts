@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2024 RNA3DS Lab CSUMB.
- * All code written for RNA3DS Lab is protected under the terms of the NDA.
- * No code shall be distributed or modified without the permission of the PI.
+ * Copyright (c) 2025 RNA3DS Lab CSUMB.
  * @author Sameer Dingore <sdingore@csumb.edu>
  */
 
@@ -17,16 +15,27 @@ export interface MotifProps {
     locked: boolean,
     position?: Vec3,
     rotation?: Quat,
+    scale?: number,
+}
+
+/**
+ * ________________________________________________________________________________________________
+*/
+export interface CustomEventProps<T extends Events.Event = Events.Event> {
+    eventType: Events.EventType,
+    callback: (event: T) => void;
 }
 
 /**
  * ________________________________________________________________________________________________
  */
-export interface CustomEventProps {
-    event: Events.Event,
-    eventType: Events.EventType,
-    callback: (event: Events.Event) => void;
-}
+type AnyEventProps =
+    | CustomEventProps<Events.Event> 
+    | CustomEventProps<Events.KeyboardEvent> 
+    | CustomEventProps<Events.PinchEvent> 
+    | CustomEventProps<Events.PointerEvent> 
+    | CustomEventProps<Events.SelectionEvent>
+;
 
 /**
  * ________________________________________________________________________________________________
@@ -39,10 +48,8 @@ export interface CanvasProps {
     rendererSizeIsWindow?: boolean,
     cameraPositionZ?: number,
     // Grid view
-    // Custom motif props (e.g. position, rotation, lock, etc.)
     motifProps: MotifProps[],
-    // Custom events
-    customEventProps?: CustomEventProps[],
+    customEventProps?: AnyEventProps[],
 }
 /**
  * ________________________________________________________________________________________________

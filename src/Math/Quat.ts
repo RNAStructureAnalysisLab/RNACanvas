@@ -13,11 +13,13 @@ export class Quat {
     quaternion.quaternion.multiplyToRef(this._quaternion, this._quaternion);
   }
 
-  setToQuaternion(quaternion: Nullable<Quaternion>) {
+  setToQuaternion(quaternion: Nullable<Quaternion>): this {
     if (quaternion === null) {
       throw new Error('Cannot set to null quaternion');
     }
-    this._quaternion = quaternion;
+    this.setFromValues(quaternion.w, quaternion.x, quaternion.y, quaternion.z);
+
+    return this;
   }
 
   setFromMatrix(matrix: Matrix4): this {
@@ -30,7 +32,35 @@ export class Quat {
     return this;
   }
 
+  setFromValues(w: number, x: number, y: number, z: number): this {
+    this._quaternion.set(x, y, z, w);
+    return this;
+  }
+
+  toArray(): number[] {
+    const quatArr: number[] = [];
+    this._quaternion.toArray(quatArr);
+
+    return quatArr;
+  }
+
   get quaternion(): Quaternion {
     return this._quaternion;
+  }
+
+  get w(): number {
+    return this._quaternion.w;
+  }
+
+  get x(): number {
+    return this._quaternion.x;
+  }
+
+  get y(): number {
+    return this._quaternion.y;
+  }
+
+  get z(): number {
+    return this._quaternion.z;
   }
 }
