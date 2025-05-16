@@ -83,6 +83,14 @@ export class Motif extends Group<Residue> {
     );
   }
 
+  setScale(scale: number) {
+    this._node.scaling = new Vector3(
+      scale,
+      scale,
+      scale
+    );
+  }
+
   get uuid(): string {
     return this._node.uniqueId.toString();
   }

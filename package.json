@@ -1,6 +1,6 @@
 {
   "name": "@judah-silva/rnacanvas",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A 3D Canvas for displaying and interacting with custom RNA models. Powered by BabylonJS.",
   "license": "MIT",
   "main": "./dist/index.js",

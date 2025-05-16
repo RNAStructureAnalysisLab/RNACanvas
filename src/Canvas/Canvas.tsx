@@ -231,7 +231,6 @@ export function Canvas({
       // console.log('possible destruction prevented: ', event);
       return;
     }
-    // console.log(event);
     // Check if right-click is pressed.
     if (event.buttons === 2 && selectedMotifMeshState.current.size > 0) {
       if (scene.current) {
@@ -243,8 +242,10 @@ export function Canvas({
         const deltaY = (rawDeltaY / renderHeight) * canvasRef.current!.height;
         // Translate all unlocked motifs
         selectedMotifMeshState.current.forEach((element: Motif) => {
-          if (!lockedMotifIdState.current.includes(element.uuid) &&
-              !hardLockedMotifIds.includes(element.uuid)) {
+          if (
+            !lockedMotifIdState.current.includes(element.uuid) &&
+            !hardLockedMotifIds.includes(element.uuid)
+          ) {
             element.translate(-deltaX, -deltaY, 0);
           }
         });
@@ -269,7 +270,6 @@ export function Canvas({
           if (!lockedMotifIdState.current.includes(element.uuid) &&
               !hardLockedMotifIds.includes(element.uuid)) {
             // element.quaternion.multiplyQuaternions(rotationQuat, element.quaternion);
-            // console.log(event);
             element.rotate(axisVec, angle);
           }
         });
@@ -301,11 +301,18 @@ export function Canvas({
       const zoomDirection = event.originalEvent.deltaY > 0 ? -1 : 1; // -1 for zoom in, 1 for zoom out
       selectedMotifMeshState.current.forEach((element: Motif) => {
         // Adjust the scale of the selected motif based on the zoom direction
-        if (!lockedMotifIdState.current.includes(element.uuid) &&
-            !hardLockedMotifIds.includes(element.uuid)) {
+        if (
+          !lockedMotifIdState.current.includes(element.uuid) &&
+          !hardLockedMotifIds.includes(element.uuid) &&
+          !((element.scale <= 1) && zoomDirection === -1) &&
+          !((element.scale >= 30) && zoomDirection === 1)
+        ) {
           const scaleFactor = 1 + zoomDirection * zoomSpeed;
           element.multiplyScalar(scaleFactor);
         }
+
+        if (element.scale < 1) element.setScale(1);
+        if (element.scale > 30) element.setScale(30);
       });
     }
   }
@@ -455,6 +462,69 @@ export function Canvas({
 
     return positions;
   };
+  
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * This function takes in a number of motifs and auto-determines starting positions for them on the canvas.
+   * @param numMotifs { number } The number of motifs to be displayed on the canvas.
+   */
+  // const isGoingOutOfBounds = (currPosition: Vec3, deltaX: number, deltaY: number): boolean => {
+  //   if (!canvasRef.current) {
+  //     return [];
+  //   }
+
+  //   const totalWidth: number = canvasRef.current.width;
+  //   const subdividedWidth: number = totalWidth / (numMotifs);
+  //   const halfWidth: number = subdividedWidth / 2;
+  //   const totalHeight: number = canvasRef.current.height;
+  //   const subdividedHeight: number = (totalHeight * (numMotifs > 3 ? 1 : 0)) / 5;
+
+  //   const positions: Vec3[] = [];
+  //   for (let i = 0, x = totalWidth / 2; i < numMotifs; i += 1, x -= subdividedWidth) {
+  //     positions.push(new Vec3(x - halfWidth, subdividedHeight * (i % 2 ? 1 : -1), -100));
+  //   }
+
+  //   return positions;
+  // };
+
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * Function to update motif positions and rotations from motifProps
+  */
+  const updateMotifs = (): void => {
+    const positions = calculatePositions(motifs.length);
+
+    motifs.forEach((motifMesh: Motif, index) => {
+      if (!scene.current?.children.has(motifMesh.uuid)) return;
+      // If there is a pre-determined position, update the positions array
+      if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
+      motifMesh.setPosition(positions[index].x, positions[index].y, positions[index].z);
+
+      // If there is a pre-determined rotation, set the motif to it
+      if (motifProps[index].rotation) motifMesh.setQuaternion(motifProps[index].rotation);
+
+      // Set the scale of the motif based on the size of the canvas
+      let scale = canvasRef.current!.width / 250;
+      if (motifProps[index].scale) scale = motifProps[index].scale;
+      motifMesh.setScale(scale);
+    });
+  }
+
+  /**
+   * ____________________________________________________________________________________________
+   */
+  /**
+   * This useEffect is used to update the selectedMotifIds state whenever the equivalent variable in the DataManager is updated.
+   * #UseEffect
+   * #State
+   */
+  useEffect(() => {
+    updateMotifs();
+  }, [motifProps]);
 
   /**
    * ____________________________________________________________________________________________
@@ -667,19 +737,16 @@ export function Canvas({
       );
     }
 
-    // console.log('canvas motif props: ', motifProps);
-
     /**
      * Initialization of the motifs on the canvas setting its position, and scale
      * #Definition
     */
-   const positions = calculatePositions(motifs.length);
-
     if (motifs.length > 0) {
       setKabschRMSD(calculateAllKabschRMSD(motifs));
       // updateAllMotifs(motifs).then(() => {
       // });
       if (scene.current.children.size !== motifs.length) {
+        const positions = calculatePositions(motifs.length);
         motifs.forEach((motifMesh: Motif, index) => {
           scene.current?.add(motifMesh);
           // If there is a pre-determined position, update the positions array
@@ -756,10 +823,6 @@ export function Canvas({
             }
           });
         }
-      } else {
-        motifs.forEach((motifMesh) => {
-          scene.current?.add(motifMesh);
-        });
       }
     }
     /**
