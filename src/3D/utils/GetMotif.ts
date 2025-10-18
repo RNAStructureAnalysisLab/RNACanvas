@@ -26,7 +26,7 @@ export async function getMotif(
     motifName: string,
     motifMesh: MotifMesh,
     motifColorHex: string = '0xcc2900',
-    // highLightColorHex: string = '0xff3300'
+    includeAtoms: boolean = true,
 ): Promise<Motif> {
     /**
      * Create a motif group and add the motif structure to it
@@ -36,7 +36,7 @@ export async function getMotif(
     // const jsonObject = await motifJSONFileData.json();
     // eslint-disable-next-line no-restricted-syntax
     for (const [key] of Object.entries(motifMesh)) {
-        const { vertices, indices } = getPoints(motifMesh[key]);
+        const { vertices, indices } = getPoints(motifMesh[key], includeAtoms);
         const residue = new Residue('residue');
         /**
          * ________________________________________________________________________________________
@@ -59,7 +59,7 @@ export async function getMotif(
     }
 
     motif.userData.fileName = motifName;
-    motif.userData.atomInfo = await parseAtomCoords(motifMesh);
+    if (includeAtoms) motif.userData.atomInfo = await parseAtomCoords(motifMesh);
     return motif;
 }
 

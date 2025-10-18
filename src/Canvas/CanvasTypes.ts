@@ -47,7 +47,7 @@ export interface CanvasProps {
     rendererBackgroundColor?: string,
     rendererSizeIsWindow?: boolean,
     cameraPositionZ?: number,
-    // Grid view
+    showRMSD?: boolean,
     motifProps: MotifProps[],
     customEventProps?: AnyEventProps[],
 }

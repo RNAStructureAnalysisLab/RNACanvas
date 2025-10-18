@@ -11,12 +11,13 @@
  * @returns Object of { vertices: number[][], indices: number[][] }
  */
 export function getPoints(
-    nucleotideData: number[][]
+    nucleotideData: number[][],
+    includeAtoms: boolean,
 ): { vertices: number[][], indices: number[][] } {
     const vertices: number[][] = [];
     const indices: number[][] = [];
 
-    for (let i = 1; i < nucleotideData.length; i += 2) {
+    for (let i = includeAtoms ? 1 : 0; i < nucleotideData.length; i += 2) {
         vertices.push(nucleotideData[i]);
         indices.push(nucleotideData[i + 1]);
     }

@@ -30,6 +30,7 @@ export function Canvas({
   rendererBackgroundColor = '#040a20',
   rendererSizeIsWindow = false,
   cameraPositionZ = 1000,
+  showRMSD = true,
   motifProps,
   customEventProps,
 }: CanvasProps): JSX.Element {
@@ -273,7 +274,7 @@ export function Canvas({
             element.rotate(axisVec, angle);
           }
         });
-        setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+        if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
         // console.log(selectedMotifMeshState.current);
       }
     }
@@ -374,7 +375,7 @@ export function Canvas({
       }
     });
 
-    setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
     // console.log('keyboard rotate');
   }
 
@@ -565,7 +566,7 @@ export function Canvas({
     });
 
     updateGlow();
-    setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
   }, [selectedMotifIds]);
 
   /**
@@ -623,6 +624,7 @@ export function Canvas({
    * Dependency: CanvasDataManager.scoreRMSD
    */
   useEffect(() => {
+    if (!showRMSD) return; // If showRMSD is false, do not subscribe the scoreRMSD
     const unsubscribe = CanvasDataManager.subscribe(CanvasAttributeTypes.SCORE_RMSD, () => {
       setScoreRMSD(CanvasDataManager.scoreRMSD);
     });
@@ -640,6 +642,7 @@ export function Canvas({
    * Dependency: scoreRMSD
    */
   useEffect(() => {
+    if (!showRMSD) return; // If showRMSD is false, do not update the scoreRMSD
     if (CanvasDataManager.scoreRMSD !== scoreRMSD) {
       CanvasDataManager.setScoreRMSD(scoreRMSD);
     }
@@ -655,6 +658,7 @@ export function Canvas({
    * Dependency: CanvasDataManager.kabschRMSD
    */
   useEffect(() => {
+    if (!showRMSD) return; // If showRMSD is false, do not subscribe the kabschRMSD
     const unsubscribe = CanvasDataManager.subscribe(CanvasAttributeTypes.KABSCH_RMSD, () => {
       setKabschRMSD(CanvasDataManager.kabschRMSD);
       // console.log('kabschRMSD Test');
@@ -673,6 +677,7 @@ export function Canvas({
    * Dependency: kabschRMSD
    */
   useEffect(() => {
+    if (!showRMSD) return; // If showRMSD is false, do not update the kabschRMSD
     if (CanvasDataManager.kabschRMSD !== kabschRMSD) {
       CanvasDataManager.setKabschRMSD(kabschRMSD);
     } else if (CanvasDataManager.kabschRMSD.length !== motifs.length) {
@@ -742,7 +747,7 @@ export function Canvas({
      * #Definition
     */
     if (motifs.length > 0) {
-      setKabschRMSD(calculateAllKabschRMSD(motifs));
+      if (showRMSD) setKabschRMSD(calculateAllKabschRMSD(motifs));
       // updateAllMotifs(motifs).then(() => {
       // });
       if (scene.current.children.size !== motifs.length) {
