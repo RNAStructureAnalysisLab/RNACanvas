@@ -22,7 +22,10 @@ export class Residue extends Group<MeshObject> {
     this._children.add(child);
   }
 
-  // Temporary function to find if Residue contains mesh with uuid
+  /**
+   * Checks if the residue has a mesh with the given uuid
+   * @param uuid 
+   */
   hasMesh(uuid: string): boolean {
     let found: boolean = false;
     this._children.forEach((child: MeshObject) => {
@@ -32,5 +35,15 @@ export class Residue extends Group<MeshObject> {
     });
 
     return found;
+  }
+
+  /**
+   * Cretes a material with the given color and sets it to the mesh
+   * @param color String in the format of #RRGGBB
+   */
+  colorResidue(color: string) {
+    this._children.forEach((child: MeshObject) => {
+      child.createAndSetMaterial(color);
+    })
   }
 }
