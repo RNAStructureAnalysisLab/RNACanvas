@@ -132,7 +132,19 @@ export class RenderScene {
     }
 
     this._children.delete(motif.uuid);
-    this._scene.removeTransformNode(motif.node);
+    motif.node.dispose(false, true);
+    // this._scene.removeTransformNode(motif.node);
+  }
+
+  removeAll(): void {
+    console.log('Removing all motifs from scene.');
+    this._children.forEach((motif: Motif) => {
+      if (this._scene.getNodeById(motif.node.id)) {
+        console.log('Disposing motif: ', motif);
+        motif.node.dispose(false, true);
+      }
+    });
+    this._children.clear();
   }
 
   setBackgroundColor(hexColor: string): void {
