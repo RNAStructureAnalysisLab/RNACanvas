@@ -53,6 +53,7 @@ export class MeshObject {
     const color3 = Color3.FromHexString(`#${color.replace(/^0x/, '')}`);
     mat.diffuseColor = color3;
     mat.specularColor = color3;
+    mat.backFaceCulling = false;
     this._mesh.material = mat;
   }
 

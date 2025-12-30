@@ -3,7 +3,7 @@
  * @author Judah Silva <silva.judah7@outlook.com>
  */
 
-import { Camera, Color4, Engine, Geometry, HemisphericLight, Material, Mesh, Scene, TransformNode, UniversalCamera, Vector3 } from '@babylonjs/core';
+import { AbstractMesh, Camera, Color4, Engine, Geometry, HemisphericLight, Material, Mesh, Scene, TransformNode, UniversalCamera, Vector3 } from '@babylonjs/core';
 import type { Motif } from './Motif';
 import { Residue } from './Residue';
 import { MeshObject } from './MeshObject';
@@ -137,13 +137,18 @@ export class RenderScene {
   }
 
   removeAll(): void {
-    console.log('Removing all motifs from scene.');
-    this._children.forEach((motif: Motif) => {
-      if (this._scene.getNodeById(motif.node.id)) {
-        console.log('Disposing motif: ', motif);
-        motif.node.dispose(false, true);
+    // console.log('Removing all motifs from scene.');
+    this._scene.meshes.slice().forEach((mesh: AbstractMesh) => {
+      if (mesh && this._scene.getMeshById(mesh.id)) {
+        this._scene.removeMesh(mesh)
       }
-    });
+    })
+    // this._children.forEach((motif: Motif) => {
+    //   if (this._scene.getNodeById(motif.node.id)) {
+    //     console.log('Disposing motif: ', motif);
+    //     motif.node.dispose(false, true);
+    //   }
+    // });
     this._children.clear();
   }
 
@@ -169,7 +174,7 @@ export class RenderScene {
 
       currObj.setNewMesh(mesh);
 
-      node.dispose();
+      node.dispose(false, true);
     }
 
     // If currObj is not a MeshObject, recurse over the children

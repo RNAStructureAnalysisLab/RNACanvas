@@ -241,9 +241,19 @@ export class EventManager {
         timestamp: performance.now(),
       };
 
-      if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
+      if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN && /^[wasdqeWASD]$/.test(event.key)) {
+        if (event.key.charCodeAt(0) >= 97) { // lowercase
+          this._activeKeys.delete(event.key.toUpperCase());
+        } else {
+          this._activeKeys.delete(event.key.toLowerCase());
+        }
         this._activeKeys.add(event.key);
       } else if (keyboardInfo.type === KeyboardEventTypes.KEYUP) {
+        if (event.key.charCodeAt(0) >= 97) { // lowercase
+          this._activeKeys.delete(event.key.toUpperCase());
+        } else {
+          this._activeKeys.delete(event.key.toLowerCase());
+        }
         this._activeKeys.delete(event.key);
       }
 

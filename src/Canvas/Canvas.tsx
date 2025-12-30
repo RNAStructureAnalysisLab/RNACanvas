@@ -49,7 +49,8 @@ export function Canvas({
    * Pull the motif objects out of the motifProps for ease of access
    * Also set hardLockedMotifIds now
    */
-  const motifs: Motif[] = [];
+  // const motifs: Motif[] = [];
+  const motifs = useRef<Motif[]>([]);
   let hardLockedMotifIds: string[] = [];
   motifProps.forEach((motifProp) => {
     if (motifProp.locked) hardLockedMotifIds.push(motifProp.motif.uuid);
@@ -74,12 +75,12 @@ export function Canvas({
    */
   // const [selectedMotifMeshState, setSelectedMotifMeshState] = useState<Set<Motif>>(new Set());
   const selectedMotifMeshState = useRef<Set<Motif>>(new Set());
-  const lockedMotifIdState = useRef<string[]>([]);
+  const lockedMotifIdState = useRef<Set<string>>(new Set());
   const [cursorStyle, setCursorStyle] = useState('auto');
   const [selectedMotifIds, setSelectedmotifIds] = useState<Set<string>>(new Set());
   const [scoreRMSD, setScoreRMSD] = useState<ScoreInfo[][]>([]);
   const [kabschRMSD, setKabschRMSD] = useState<number[][]>([]);
-  const [lockedMotifIds, setLockedMotifIds] = useState<string[]>([]);
+  const [lockedMotifIds, setLockedMotifIds] = useState<Set<string>>(new Set());
 
   /**
    * ____________________________________________________________________________________________
@@ -96,9 +97,9 @@ export function Canvas({
     // Loop through motifs, adding them to a new set if they're selected already or are the argument Motif
     // Done this way to keep selectedMotifIds in ascending order of Motif uuid
     const newSet = new Set<string>();
-    for (let i = 0; i < motifs.length; i += 1) {
-      if (selectedMotifMeshState.current.has(motifs[i]) || motifs[i].uuid === motif.uuid) {
-        newSet.add(motifs[i].uuid);
+    for (let i = 0; i < motifs.current.length; i += 1) {
+      if (selectedMotifMeshState.current.has(motifs.current[i]) || motifs.current[i].uuid === motif.uuid) {
+        newSet.add(motifs.current[i].uuid);
       }
     }
     setSelectedmotifIds(newSet);
@@ -135,7 +136,7 @@ export function Canvas({
    * #Function
    */
   function updateGlow() {
-    motifs.forEach((motif: Motif) => {
+    motifs.current.forEach((motif: Motif) => {
       motif.children.forEach((residue: Residue) => {
         residue.children.forEach((childMesh: MeshObject) => {
           if (selectedMotifIds.has(motif.uuid)) {
@@ -160,21 +161,15 @@ export function Canvas({
    * @returns {void}
    */
   function onSelectMotif(event: Events.SelectionEvent): void {
-    console.log(motifs);
     if (event.type !== Events.EventType.OBJECT_SELECTED) {
       return;
     }
 
     const { motif } = event;
 
-    if (!motif ||
-        selectedMotifMeshState.current.has(motif) ||
-        lockedMotifIdState.current.includes(motif.uuid) ||
-        hardLockedMotifIds.includes(motif.uuid)) {
+    if (!motif || selectedMotifMeshState.current.has(motif)) {
       return;
     }
-
-    // console.log(motif);
 
     // If event has the ctrl key, then add this motif to the selected motifs
     if (event.multiSelect && motif) {
@@ -244,7 +239,7 @@ export function Canvas({
         // Translate all unlocked motifs
         selectedMotifMeshState.current.forEach((element: Motif) => {
           if (
-            !lockedMotifIdState.current.includes(element.uuid) &&
+            !lockedMotifIdState.current.has(element.uuid) &&
             !hardLockedMotifIds.includes(element.uuid)
           ) {
             element.translate(-deltaX, -deltaY, 0);
@@ -268,13 +263,13 @@ export function Canvas({
 
         // accumulatedRotationQ.multiplyQuaternions(rotationQuat, accumulatedRotationQ);
         selectedMotifMeshState.current.forEach((element: Motif) => {
-          if (!lockedMotifIdState.current.includes(element.uuid) &&
+          if (!lockedMotifIdState.current.has(element.uuid) &&
               !hardLockedMotifIds.includes(element.uuid)) {
             // element.quaternion.multiplyQuaternions(rotationQuat, element.quaternion);
             element.rotate(axisVec, angle);
           }
         });
-        if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+        if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs.current));
         // console.log(selectedMotifMeshState.current);
       }
     }
@@ -303,7 +298,7 @@ export function Canvas({
       selectedMotifMeshState.current.forEach((element: Motif) => {
         // Adjust the scale of the selected motif based on the zoom direction
         if (
-          !lockedMotifIdState.current.includes(element.uuid) &&
+          !lockedMotifIdState.current.has(element.uuid) &&
           !hardLockedMotifIds.includes(element.uuid) &&
           !((element.scale <= 1) && zoomDirection === -1) &&
           !((element.scale >= 30) && zoomDirection === 1)
@@ -368,14 +363,14 @@ export function Canvas({
 
     const angle = (event.rotationAxis.length() / 500) * (6 * Math.PI);
     selectedMotifMeshState.current.forEach((element: Motif) => {
-      if (!lockedMotifIdState.current.includes(element.uuid) &&
+      if (!lockedMotifIdState.current.has(element.uuid) &&
           !hardLockedMotifIds.includes(element.uuid)) {
         // element.quaternion.multiplyQuaternions(rotationQuat, element.quaternion);
         element.rotate(event.rotationAxis, angle);
       }
     });
 
-    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs.current));
     // console.log('keyboard rotate');
   }
 
@@ -391,10 +386,10 @@ export function Canvas({
     if (event.translationDirection.equals(Vec3.Zero)) { // If there is no translation
       return;
     }
-    event.translationDirection.multiplyScalar(0.5);
+    event.translationDirection.multiplyScalar(4.5);
     // console.log(selectedMotifMeshState);
     selectedMotifMeshState.current.forEach((element: Motif) => {
-      if (!lockedMotifIdState.current.includes(element.uuid) &&
+      if (!lockedMotifIdState.current.has(element.uuid) &&
           !hardLockedMotifIds.includes(element.uuid)) {
         // console.log('translating ', element);
         element.translate(
@@ -421,12 +416,12 @@ export function Canvas({
       return;
     }
 
-    if (!(/^[1-9]$/.test(event.key)) || Number(event.key) > motifs.length) { // A non-number key was pressed, or is out of bounds
+    if (!(/^[1-9]$/.test(event.key)) || Number(event.key) > motifs.current.length) { // A non-number key was pressed, or is out of bounds
       return;
     }
 
     // Get the 1-indexed motif
-    const motif = motifs[Number(event.key) - 1];
+    const motif = motifs.current[Number(event.key) - 1];
     if (selectedMotifMeshState.current.has(motif)) { // Toggle select state for this motif
       // console.log('removing motif');
       removeMotif(motif);
@@ -497,9 +492,9 @@ export function Canvas({
    * Function to update motif positions and rotations from motifProps
   */
   const updateMotifs = (): void => {
-    const positions = calculatePositions(motifs.length);
+    const positions = calculatePositions(motifs.current.length);
 
-    motifs.forEach((motifMesh: Motif, index) => {
+    motifs.current.forEach((motifMesh: Motif, index) => {
       if (!scene.current?.children.has(motifMesh.uuid)) return;
       // If there is a pre-determined position, update the positions array
       if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
@@ -563,14 +558,14 @@ export function Canvas({
     }
 
     selectedMotifMeshState.current.clear();
-    motifs.forEach((motif: Motif) => {
+    motifs.current.forEach((motif: Motif) => {
       if (selectedMotifIds.has(motif.uuid)) {
         selectedMotifMeshState.current.add(motif);
       }
     });
 
     updateGlow();
-    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs));
+    if (showRMSD) setScoreRMSD(calculateRMSD(Array.from(selectedMotifMeshState.current), motifs.current));
   }, [selectedMotifIds]);
 
   /**
@@ -684,8 +679,8 @@ export function Canvas({
     if (!showRMSD) return; // If showRMSD is false, do not update the kabschRMSD
     if (CanvasDataManager.kabschRMSD !== kabschRMSD) {
       CanvasDataManager.setKabschRMSD(kabschRMSD);
-    } else if (CanvasDataManager.kabschRMSD.length !== motifs.length) {
-      CanvasDataManager.setKabschRMSD(calculateAllKabschRMSD(motifs));
+    } else if (CanvasDataManager.kabschRMSD.length !== motifs.current.length) {
+      CanvasDataManager.setKabschRMSD(calculateAllKabschRMSD(motifs.current));
     }
 
     // console.log(CanvasDataManager.kabschRMSD);
@@ -734,9 +729,8 @@ export function Canvas({
    * Dependency: motifs, rendererWidth, rendererHeight, rendererSizeIsWindow
    */
   useEffect(() => {
-    console.log('Outside: ', scene.current);
     if (!canvasRef.current) return;
-
+    
     if (!scene.current) {
       scene.current = new RenderScene(
         canvasRef.current,
@@ -746,7 +740,6 @@ export function Canvas({
         rendererSizeIsWindow ? window.innerHeight : rendererHeight
       );
 
-      console.log('Inside: ', scene.current);
       const eventManager = scene.current?.eventManager;
       eventManager.on(Events.EventType.OBJECT_SELECTED, onSelectMotif);
       eventManager.on(Events.EventType.OBJECT_DESELECTED, onDeselectMotif);
@@ -820,21 +813,19 @@ export function Canvas({
     */
     if (!scene.current || !canvasRef.current) return;
 
-    console.log('Setting up motifs')
-
-    motifs.length = 0;
+    motifs.current.length = 0;
     motifProps.forEach((motifProp) => {
-      motifs.push(motifProp.motif);
+      motifs.current.push(motifProp.motif);
     });
 
-    if (motifs.length > 0) {
-      if (showRMSD) setKabschRMSD(calculateAllKabschRMSD(motifs));
-      // updateAllMotifs(motifs).then(() => {
-      // });
+    if (motifs.current.length > 0) {
+      if (showRMSD) setKabschRMSD(calculateAllKabschRMSD(motifs.current));
+
       
       scene.current.removeAll();
-      const positions = calculatePositions(motifs.length);
-      motifs.forEach((motifMesh: Motif, index) => {
+      const positions = calculatePositions(motifs.current.length);
+      motifs.current.forEach((motifMesh: Motif, index) => {
+        // console.log('Adding motif: ', motifMesh);
         scene.current?.add(motifMesh);
         // If there is a pre-determined position, update the positions array
         if (motifProps[index].position) positions[index] = motifProps[index].position.clone();
@@ -846,7 +837,9 @@ export function Canvas({
         // Set the scale of the motif based on the size of the canvas
         let scale = canvasRef.current!.width / 250;
         if (motifProps[index].scale) scale = motifProps[index].scale;
-        motifMesh.multiplyScalar(scale);
+        motifMesh.setScale(scale);
+
+        if (motifProps[index].locked) lockedMotifIdState.current.add(motifMesh.uuid);
       });
     }
   }, [rendererWidth, rendererHeight, rendererSizeIsWindow, motifProps]);

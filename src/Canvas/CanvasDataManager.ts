@@ -19,7 +19,7 @@ export enum CanvasAttributeTypes {
 
 export class CanvasDataManager {
   private static _selectedMotifIds: Set<string> = new Set<string>();
-  private static _lockedMotifIds: string[] = [];
+  private static _lockedMotifIds: Set<string> = new Set<string>();
   private static _hardLockedMotifIds: string[] = [];
   private static _scoreRMSD: ScoreInfo[][] = [];
   private static _kabschRMSD: number[][] = [];
@@ -35,11 +35,11 @@ export class CanvasDataManager {
     this._listeners.get(CanvasAttributeTypes.SELECTED_MOTIFS)?.forEach((fn) => fn());
   }
 
-  static get lockedMotifIds(): string[] {
+  static get lockedMotifIds(): Set<string> {
     return this._lockedMotifIds;
   }
 
-  static setLockedMotifIds(lockedMotifIds: string[]): void {
+  static setLockedMotifIds(lockedMotifIds: Set<string>): void {
     this._lockedMotifIds = lockedMotifIds;
     this._listeners.get(CanvasAttributeTypes.LOCKED_MOTIF_IDS)?.forEach((fn) => fn());
   }
