@@ -40,10 +40,14 @@ export class Residue extends Group<MeshObject> {
   /**
    * Cretes a material with the given color and sets it to the mesh
    * @param color String in the format of #RRGGBB
+   * @param highlight Whether to apply a highlight effect to the residue
    */
-  colorResidue(color: string) {
+  colorResidue(color: string, highlight: boolean = false) {
     this._children.forEach((child: MeshObject) => {
-      child.createAndSetMaterial(color);
+      child.colorMaterial(color);
+      if (highlight) {
+        child.applyHighlight();
+      }
     })
   }
 }

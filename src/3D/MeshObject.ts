@@ -36,7 +36,7 @@ export class MeshObject {
 
   applyHighlight() {
     const mat = this._mesh.material as StandardMaterial;
-    mat.emissiveColor = mat.diffuseColor.scale(0.75);
+    mat.emissiveColor = mat.diffuseColor.scale(0.60);
   }
 
   resetHighlight() {
@@ -45,16 +45,27 @@ export class MeshObject {
   }
 
   /**
-   * Cretes a material with the given color and sets it to the mesh
+   * Creates a material with the given color and sets it to the mesh
    * @param color String in the format of #RRGGBB
    */
   createAndSetMaterial(color: string) {
     const mat = new StandardMaterial('mat');
-    const color3 = Color3.FromHexString(`#${color.replace(/^0x/, '')}`);
+    const color3 = Color3.FromHexString(`${color.replace(/^0x/i, '')}`);
     mat.diffuseColor = color3;
     mat.specularColor = color3;
     mat.backFaceCulling = false;
     this._mesh.material = mat;
+  }
+  
+  /**
+   * Sets the material of the mesh object to the given color
+   * @param color String in the format of #RRGGBB
+   */
+  colorMaterial(color: string) {
+    const mat = this._mesh.material as StandardMaterial;
+    const color3 = Color3.FromHexString(`${color.replace(/^0x/i, '')}`);
+    mat.diffuseColor = color3;
+    mat.specularColor = color3;
   }
 
   setNewMesh(mesh: Mesh): MeshObject {

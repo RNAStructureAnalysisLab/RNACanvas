@@ -44,7 +44,7 @@ export interface CanvasProps {
     title?: string,
     rendererWidth?: number,
     rendererHeight?: number,
-    rendererBackgroundColor?: string,
+    rendererBackgroundColor?: string, // Format #RRGGBB
     rendererSizeIsWindow?: boolean,
     cameraPositionZ?: number,
     showRMSD?: boolean,

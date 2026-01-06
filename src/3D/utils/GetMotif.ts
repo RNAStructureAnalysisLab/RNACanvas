@@ -25,7 +25,7 @@ export type MotifMesh = Record<string, any>;
 export async function getMotif(
     motifName: string,
     motifMesh: MotifMesh,
-    motifColorHex: string = '0xcc2900',
+    motifColorHex: string = '#cc2900',
     includeAtoms: boolean = true,
 ): Promise<Motif> {
     /**

@@ -153,6 +153,31 @@ export function Canvas({
   /**
    * ____________________________________________________________________________________________
    */
+  function motifOutOfBounds(motif: Motif, deltaX: number, deltaY: number): boolean {
+    if (!canvasRef.current) {
+      return false;
+    }
+
+    const canvasWidth = canvasRef.current.width;
+    const canvasHeight = canvasRef.current.height;
+
+    const left = -canvasWidth / 2;
+    const right = canvasWidth / 2;
+    const top = canvasHeight / 2;
+    const bottom = -canvasHeight / 2;
+
+    const newX = motif.position.x + deltaX;
+    const newY = motif.position.y + deltaY;
+
+    // If the new position is outside these bounds, return true
+    if (newX <= left || newX >= right || newY <= bottom || newY >= top) return true;
+
+    return false;
+  }
+
+  /**
+   * ____________________________________________________________________________________________
+   */
 
   /**
    * This Function is called by Event Handling when a mesh is clicked on the scene.
@@ -239,8 +264,9 @@ export function Canvas({
         // Translate all unlocked motifs
         selectedMotifMeshState.current.forEach((element: Motif) => {
           if (
-            !lockedMotifIdState.current.has(element.uuid) &&
-            !hardLockedMotifIds.includes(element.uuid)
+            (!lockedMotifIdState.current.has(element.uuid) &&
+            !hardLockedMotifIds.includes(element.uuid)) &&
+            !motifOutOfBounds(element, -deltaX, -deltaY)
           ) {
             element.translate(-deltaX, -deltaY, 0);
           }
@@ -389,8 +415,11 @@ export function Canvas({
     event.translationDirection.multiplyScalar(4.5);
     // console.log(selectedMotifMeshState);
     selectedMotifMeshState.current.forEach((element: Motif) => {
-      if (!lockedMotifIdState.current.has(element.uuid) &&
-          !hardLockedMotifIds.includes(element.uuid)) {
+      if (
+        (!lockedMotifIdState.current.has(element.uuid) &&
+        !hardLockedMotifIds.includes(element.uuid)) &&
+        !motifOutOfBounds(element, event.translationDirection.x, event.translationDirection.y)
+      ) {
         // console.log('translating ', element);
         element.translate(
           event.translationDirection.x,

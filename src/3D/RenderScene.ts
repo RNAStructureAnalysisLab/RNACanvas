@@ -25,6 +25,14 @@ export class RenderScene {
   private _isDisposed: boolean = false;
   public isRunning: boolean = false;
 
+  /**
+   * 
+   * @param canvas HTML Canvas Element
+   * @param hexColor Color in the format of #RRGGBB
+   * @param cameraPositionZ Z position of the camera
+   * @param renderWidth Width of the render window
+   * @param renderHeight Height of the render window
+   */
   constructor(
     canvas: HTMLCanvasElement,
     hexColor: string,
@@ -36,7 +44,7 @@ export class RenderScene {
     this._engine = new Engine(this._canvas, true);
     this._engine.setSize(renderWidth, renderHeight);
     this._scene = new Scene(this._engine);
-    this._scene.clearColor = Color4.FromHexString(`${hexColor.replace(/^0x/, '')}`);
+    this._scene.clearColor = Color4.FromHexString(`${hexColor.replace(/^0x/i, '')}`);
 
     this._camera = new UniversalCamera('camera', new Vector3(0, 0, cameraPositionZ));
     this._camera.setTarget(new Vector3(0, 0, 0));
@@ -53,7 +61,7 @@ export class RenderScene {
 
     this._eventManager = new EventManager();
 
-    window.addEventListener('resize', this._handleResize.bind(this));
+    // window.addEventListener('resize', this._handleResize.bind(this));
   }
 
   // Start the render loop
@@ -103,7 +111,7 @@ export class RenderScene {
   // Stop and dispose of all resources
   dispose(): void {
     this.stop();
-    window.removeEventListener('resize', this._handleResize);
+    // window.removeEventListener('resize', this._handleResize);
 
     // Dispose of event listeners and triggers
     this._eventManager.dispose();
@@ -153,7 +161,7 @@ export class RenderScene {
   }
 
   setBackgroundColor(hexColor: string): void {
-    this._scene.clearColor = Color4.FromHexString(`${hexColor.replace(/^0x/, '')}`);
+    this._scene.clearColor = Color4.FromHexString(`${hexColor.replace(/^0x/i, '')}`);
   }
 
   private _reattachToScene(node: TransformNode, currObj: Motif | Residue | MeshObject): void {
