@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/RNAStructureAnalysisLab/RNACanvas"
+    "url": "git+https://github.com/RNAStructureAnalysisLab/RNACanvas.git"
   },
   "module": "./dist/index.mjs",
   "scripts": {
